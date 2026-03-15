@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <rect width="800" height="600" fill="#09090b"/>
+  <!-- Header -->
+  <rect y="0" width="800" height="56" fill="#09090b" stroke="#27272a" stroke-width="1"/>
+  <text x="100" y="32" fill="#f4f4f5" font-family="system-ui" font-size="16" font-weight="bold">WP Theme Generator</text>
+  <text x="100" y="48" fill="#71717a" font-family="system-ui" font-size="10">AI-powered WordPress Block Theme builder</text>
+  <text x="700" y="36" fill="#52525b" font-family="monospace" font-size="11">FSE / Block Themes</text>
+  <!-- Title -->
+  <text x="100" y="100" fill="#f4f4f5" font-family="system-ui" font-size="22" font-weight="bold">Create Your WordPress Theme</text>
+  <text x="100" y="125" fill="#a1a1aa" font-family="system-ui" font-size="13">Describe your ideal website and our AI will generate a complete, installable WordPress Block Theme.</text>
+  <!-- Preset buttons -->
+  <text x="100" y="165" fill="#d4d4d8" font-family="system-ui" font-size="12" font-weight="500">Quick Start Presets</text>
+  <rect x="100" y="175" width="280" height="36" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="115" y="198" fill="#d4d4d8" font-family="system-ui" font-size="12">Dark Photography Portfolio</text>
+  <rect x="395" y="175" width="280" height="36" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="410" y="198" fill="#d4d4d8" font-family="system-ui" font-size="12">Clean Business Landing</text>
+  <rect x="100" y="220" width="280" height="36" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="115" y="243" fill="#d4d4d8" font-family="system-ui" font-size="12">Colorful Food Blog</text>
+  <rect x="395" y="220" width="280" height="36" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="410" y="243" fill="#d4d4d8" font-family="system-ui" font-size="12">Minimal Tech Docs</text>
+  <!-- Theme Name field -->
+  <text x="100" y="290" fill="#d4d4d8" font-family="system-ui" font-size="12" font-weight="500">Theme Name *</text>
+  <rect x="100" y="298" width="575" height="38" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="115" y="322" fill="#71717a" font-family="system-ui" font-size="13">My Awesome Theme</text>
+  <!-- Description field -->
+  <text x="100" y="365" fill="#d4d4d8" font-family="system-ui" font-size="12" font-weight="500">Description *</text>
+  <rect x="100" y="373" width="575" height="90" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="115" y="397" fill="#71717a" font-family="system-ui" font-size="13">A dark mode photography portfolio with sticky nav,</text>
+  <text x="115" y="417" fill="#71717a" font-family="system-ui" font-size="13">large hero, masonry gallery, and minimal footer...</text>
+  <text x="100" y="480" fill="#71717a" font-family="system-ui" font-size="10">0/1000 characters (min 20)</text>
+  <!-- Advanced toggle -->
+  <text x="100" y="510" fill="#a78bfa" font-family="system-ui" font-size="13">Show Advanced Options</text>
+  <!-- Generate button -->
+  <rect x="100" y="535" width="575" height="44" rx="8" fill="#7c3aed"/>
+  <text x="330" y="562" fill="white" font-family="system-ui" font-size="14" font-weight="600">Generate Theme</text>
+</svg>

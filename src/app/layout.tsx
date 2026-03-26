@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'WP Theme Generator - AI-Powered WordPress Block Themes',
+  title: 'Word-Press-O-Matic - AI-Powered WordPress Block Themes',
   description:
     'Generate complete, production-ready WordPress Block Themes from natural language descriptions using AI.',
 };

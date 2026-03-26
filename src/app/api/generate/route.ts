@@ -19,14 +19,23 @@ export async function POST(request: Request) {
       );
     }
 
+    const slug =
+      input.data.slug ||
+      input.data.themeName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
+      return NextResponse.json(
+        { error: 'Could not generate a valid slug from theme name. Please provide a slug manually.' },
+        { status: 400 }
+      );
+    }
+
     const themeRequest: ThemeRequest = {
       ...input.data,
-      slug:
-        input.data.slug ||
-        input.data.themeName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, ''),
+      slug,
     };
 
     // 2. Generate via AI
@@ -62,7 +71,6 @@ export async function POST(request: Request) {
     }
 
     // 4. Validate complete theme
-    const slug = themeRequest.slug as string;
     const validation = validateTheme(theme, slug);
     if (!validation.valid) {
       return NextResponse.json(

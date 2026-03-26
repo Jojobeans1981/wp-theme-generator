@@ -1,4 +1,4 @@
-# WP Theme Generator
+# Word-Press-O-Matic
 
 AI-powered web application that generates complete, production-ready WordPress Block Themes from natural language descriptions.
 
@@ -10,10 +10,16 @@ cd wp-theme-generator
 npm install
 ```
 
-Create `.env.local` in the project root:
+Copy the example environment file and add your API key:
+
+```bash
+cp .env.example .env.local
+```
+
+Then edit `.env.local` and set your Anthropic API key:
 
 ```
-ANTHROPIC_API_KEY=your-api-key-here
+ANTHROPIC_API_KEY=your-actual-api-key
 ```
 
 Start the development server:
@@ -59,7 +65,7 @@ The system has 4 layers with unidirectional data flow:
 
 | Technology | Purpose |
 |---|---|
-| Next.js 14+ (App Router) | Full-stack framework with API routes |
+| Next.js 16 (App Router) | Full-stack framework with API routes |
 | TypeScript (strict) | Type safety across the entire codebase |
 | Tailwind CSS | Utility-first styling for the UI |
 | Anthropic Claude API | AI model for theme generation |
@@ -88,6 +94,7 @@ The test suite includes:
 | Variable | Description | Required |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Anthropic API key for Claude access | Yes |
+| `AI_MODEL` | Claude model ID (default: `claude-sonnet-4-20250514`) | No |
 
 ## Screenshots
 

@@ -52,7 +52,7 @@ const paletteColorSchema = z.object({
 const fontFamilySchema = z.object({
   fontFamily: z.string().min(1),
   slug: z.string().min(1),
-  name: z.string().min(1),
+  name: z.string().min(1).default('Font'),
   fontFace: z
     .array(
       z.object({
@@ -67,46 +67,65 @@ const fontFamilySchema = z.object({
 const fontSizeSchema = z.object({
   slug: z.string().min(1),
   size: z.string().min(1),
-  name: z.string().min(1),
+  name: z.string().min(1).default('Size'),
 });
 
 const spacingSizeSchema = z.object({
   slug: z.string().min(1),
   size: z.string().min(1),
-  name: z.string().min(1),
+  name: z.string().min(1).default('Space'),
 });
 
+const DEFAULT_FONT_SIZES = [
+  { slug: 'small', size: '0.875rem', name: 'Small' },
+  { slug: 'medium', size: '1rem', name: 'Medium' },
+  { slug: 'large', size: '1.5rem', name: 'Large' },
+  { slug: 'x-large', size: '2.25rem', name: 'Extra Large' },
+  { slug: 'xx-large', size: '3.5rem', name: 'Double Extra Large' },
+];
+
+const DEFAULT_SPACING = {
+  units: ['px', 'em', 'rem', 'vh', 'vw', '%'],
+  spacingSizes: [
+    { slug: '10', size: '0.5rem', name: 'Small' },
+    { slug: '20', size: '1rem', name: 'Medium' },
+    { slug: '30', size: '1.5rem', name: 'Large' },
+    { slug: '40', size: '2.5rem', name: 'Extra Large' },
+    { slug: '50', size: '4rem', name: 'Huge' },
+  ],
+};
+
 const themeJsonDataSchema = z.object({
-  version: z.literal(3),
+  version: z.number().default(3).transform(() => 3 as const),
   settings: z.object({
     color: z.object({
       palette: z.array(paletteColorSchema).min(1),
     }),
     typography: z.object({
       fontFamilies: z.array(fontFamilySchema).min(1),
-      fontSizes: z.array(fontSizeSchema).min(1),
+      fontSizes: z.array(fontSizeSchema).min(1).default(DEFAULT_FONT_SIZES),
     }),
     spacing: z.object({
-      units: z.array(z.string()),
-      spacingSizes: z.array(spacingSizeSchema),
-    }),
+      units: z.array(z.string()).default(DEFAULT_SPACING.units),
+      spacingSizes: z.array(spacingSizeSchema).default(DEFAULT_SPACING.spacingSizes),
+    }).default(DEFAULT_SPACING),
     layout: z.object({
-      contentSize: z.string().min(1),
-      wideSize: z.string().min(1),
+      contentSize: z.string().min(1).default('800px'),
+      wideSize: z.string().min(1).default('1200px'),
     }),
-    appearanceTools: z.literal(true),
-    useRootPaddingAwareAlignments: z.literal(true),
+    appearanceTools: z.boolean().default(true).transform(() => true as const),
+    useRootPaddingAwareAlignments: z.boolean().default(true).transform(() => true as const),
   }),
   styles: z.object({
     color: z.object({
-      background: z.string().min(1),
-      text: z.string().min(1),
-    }),
+      background: z.string().min(1).default('var(--wp--preset--color--background)'),
+      text: z.string().min(1).default('var(--wp--preset--color--foreground)'),
+    }).default({}),
     typography: z.object({
-      fontFamily: z.string().min(1),
-      fontSize: z.string().min(1),
-      lineHeight: z.string().min(1),
-    }),
+      fontFamily: z.string().min(1).default('var(--wp--preset--font-family--body)'),
+      fontSize: z.string().min(1).default('var(--wp--preset--font-size--medium)'),
+      lineHeight: z.string().min(1).default('1.7'),
+    }).default({}),
     spacing: z
       .object({
         padding: z
@@ -119,16 +138,19 @@ const themeJsonDataSchema = z.object({
           .optional(),
       })
       .optional(),
-    elements: z.record(z.string(), z.record(z.string(), z.unknown())),
-    blocks: z.record(z.string(), z.record(z.string(), z.unknown())),
-  }),
+    elements: z.record(z.string(), z.record(z.string(), z.unknown())).default({}),
+    blocks: z.record(z.string(), z.record(z.string(), z.unknown())).default({}),
+  }).default({}),
   templateParts: z.array(
     z.object({
       name: z.string().min(1),
       title: z.string().min(1),
       area: z.string().min(1),
     })
-  ),
+  ).default([
+    { name: 'header', title: 'Header', area: 'header' },
+    { name: 'footer', title: 'Footer', area: 'footer' },
+  ]),
   customTemplates: z
     .array(
       z.object({

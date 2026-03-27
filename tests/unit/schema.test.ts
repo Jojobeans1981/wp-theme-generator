@@ -59,10 +59,10 @@ describe('generatedThemeSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects theme with fewer than 3 patterns', () => {
+  it('rejects theme with zero patterns', () => {
     const invalid = {
       ...MOCK_GENERATED_THEME,
-      patterns: [MOCK_GENERATED_THEME.patterns[0]],
+      patterns: [],
     };
     const result = generatedThemeSchema.safeParse(invalid);
     expect(result.success).toBe(false);

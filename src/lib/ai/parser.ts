@@ -10,9 +10,24 @@ function slugify(name: string): string {
  * Llama 3.3 frequently omits slugs, color settings, and other fields
  * that Claude always includes. Rather than rejecting, we fill defaults.
  */
+function normalizeHex(color: unknown): string {
+  if (typeof color !== 'string') return '#000000';
+  const c = color.trim();
+  // Already valid 6-digit hex
+  if (/^#[0-9a-fA-F]{6}$/.test(c)) return c;
+  // 3-digit hex → expand
+  const m3 = c.match(/^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/);
+  if (m3) return `#${m3[1]}${m3[1]}${m3[2]}${m3[2]}${m3[3]}${m3[3]}`;
+  // Named colors or garbage → fallback
+  return '#000000';
+}
+
 function patchAIOutput(data: Record<string, unknown>): Record<string, unknown> {
   const tj = data.themeJson as Record<string, unknown> | undefined;
   if (!tj) return data;
+
+  // Ensure version
+  if (!tj.version) tj.version = 3;
 
   // Ensure settings exists
   if (!tj.settings) tj.settings = {};
@@ -31,25 +46,45 @@ function patchAIOutput(data: Record<string, unknown>): Record<string, unknown> {
     };
   }
 
-  // Ensure palette entries have slugs
+  // Ensure palette entries have slugs and valid hex colors
   const color = settings.color as Record<string, unknown>;
   if (Array.isArray(color.palette)) {
     color.palette = (color.palette as Record<string, unknown>[]).map((c, i) => ({
       slug: c.slug || slugify((c.name as string) || `color-${i}`),
-      color: c.color || '#000000',
+      color: normalizeHex(c.color),
       name: c.name || `Color ${i + 1}`,
-      ...c,
     }));
+  } else {
+    color.palette = [
+      { slug: 'primary', color: '#4F46E5', name: 'Primary' },
+      { slug: 'background', color: '#FFFFFF', name: 'Background' },
+      { slug: 'foreground', color: '#1E1E1E', name: 'Foreground' },
+    ];
   }
 
-  // Ensure typography.fontFamilies have slugs and names
-  const typo = settings.typography as Record<string, unknown> | undefined;
-  if (typo && Array.isArray(typo.fontFamilies)) {
+  // Ensure typography exists with at least one font family
+  if (!settings.typography) {
+    settings.typography = {
+      fontFamilies: [
+        { fontFamily: '"Inter", sans-serif', slug: 'body', name: 'Body' },
+        { fontFamily: '"Georgia", serif', slug: 'heading', name: 'Heading' },
+      ],
+    };
+  }
+
+  const typo = settings.typography as Record<string, unknown>;
+  if (!Array.isArray(typo.fontFamilies) || typo.fontFamilies.length === 0) {
+    typo.fontFamilies = [
+      { fontFamily: '"Inter", sans-serif', slug: 'body', name: 'Body' },
+      { fontFamily: '"Georgia", serif', slug: 'heading', name: 'Heading' },
+    ];
+  } else {
     typo.fontFamilies = (typo.fontFamilies as Record<string, unknown>[]).map((f, i) => {
       const family = (f.fontFamily as string) || `Font ${i + 1}`;
       return {
-        slug: f.slug || slugify(f.name as string || family),
+        slug: f.slug || slugify((f.name as string) || family),
         name: f.name || family.replace(/["']/g, '').split(',')[0].trim(),
+        fontFamily: family,
         ...f,
       };
     });
@@ -58,6 +93,14 @@ function patchAIOutput(data: Record<string, unknown>): Record<string, unknown> {
   // Ensure styleCss exists
   if (data.styleCss === undefined || data.styleCss === null) {
     data.styleCss = '';
+  }
+
+  // Ensure templateParts is an array
+  if (!Array.isArray(data.templateParts)) {
+    data.templateParts = [
+      { name: 'header', area: 'header', content: '<!-- wp:site-title /--><!-- wp:navigation /-->' },
+      { name: 'footer', area: 'footer', content: '<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:paragraph {"align":"center"} --><p class="has-text-align-center">Powered by WordPress</p><!-- /wp:paragraph --></div><!-- /wp:group -->' },
+    ];
   }
 
   return data;

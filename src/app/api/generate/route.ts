@@ -57,17 +57,29 @@ export async function POST(request: Request) {
       throw e;
     }
 
-    // 3. Parse AI response (with one retry on failure)
+    // 3. Parse AI response (with up to 2 retries on failure)
     let theme: GeneratedTheme;
-    try {
-      theme = parseAIResponse(rawResponse);
-    } catch (parseError) {
-      // Retry once with error feedback
-      const retryPrompt =
-        userPrompt +
-        `\n\nYour previous response had errors:\n${(parseError as Error).message}\n\nPlease fix these issues and return valid JSON.`;
-      rawResponse = await provider.generate(systemPrompt, retryPrompt);
-      theme = parseAIResponse(rawResponse);
+    let lastError: Error | null = null;
+    const MAX_ATTEMPTS = 3;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      try {
+        if (attempt > 0) {
+          const retryPrompt =
+            userPrompt +
+            `\n\nATTEMPT ${attempt + 1} — your previous response had these errors:\n${lastError!.message}\n\nCRITICAL RULES FOR YOUR RETRY:\n- Return ONLY raw JSON, no markdown fences\n- Every fontFamily entry MUST have "slug", "name", and "fontFamily" keys\n- settings.color.palette MUST be an array of {slug, color, name} objects\n- templates must be [{name, content}], templateParts must be [{name, area, content}]\n- patterns must be [{name, title, categories, content}] with at least 3 entries\n- Include "styleCss" key (can be empty string "")\n- version must be 3`;
+          rawResponse = await provider.generate(systemPrompt, retryPrompt);
+        }
+        theme = parseAIResponse(rawResponse);
+        lastError = null;
+        break;
+      } catch (e) {
+        lastError = e as Error;
+      }
+    }
+
+    if (lastError || !theme!) {
+      throw lastError || new Error('Theme generation failed after retries');
     }
 
     // 4. Validate complete theme

@@ -26,8 +26,8 @@ export function validateTheme(theme: GeneratedTheme, slug: string): ValidationRe
   }
 
   // Check minimum patterns
-  if (theme.patterns.length < 3) {
-    errors.push(`At least 3 patterns required, got ${theme.patterns.length}`);
+  if (theme.patterns.length < 1) {
+    errors.push(`At least 1 pattern required, got ${theme.patterns.length}`);
   }
 
   // Check theme.json version

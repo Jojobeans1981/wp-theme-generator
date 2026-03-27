@@ -188,7 +188,7 @@ const templateFileSchema = z.object({
 
 const templatePartFileSchema = z.object({
   name: z.string().min(1),
-  area: z.enum(['header', 'footer', 'uncategorized']),
+  area: z.string().min(1),
   content: z.string().min(1),
 });
 
@@ -203,8 +203,8 @@ export const generatedThemeSchema = z.object({
   themeJson: themeJsonDataSchema,
   templates: z.array(templateFileSchema).min(1),
   templateParts: z.array(templatePartFileSchema).min(1),
-  patterns: z.array(patternFileSchema).min(3, 'At least 3 patterns required'),
-  styleCss: z.string(),
+  patterns: z.array(patternFileSchema).min(1),
+  styleCss: z.string().default(''),
 });
 
 export type ValidatedThemeRequest = z.infer<typeof themeRequestSchema>;

@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WP Theme Generator — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --zinc-50: #fafafa; --zinc-100: #f4f4f5; --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8; --zinc-400: #a1a1aa; --zinc-500: #71717a;
+  --zinc-600: #52525b; --zinc-700: #3f3f46; --zinc-800: #27272a;
+  --zinc-900: #18181b; --zinc-950: #09090b;
+  --violet-400: #a78bfa; --violet-500: #8b5cf6; --violet-600: #7c3aed;
+  --emerald-300: #6ee7b7; --emerald-400: #34d399; --emerald-500: #10b981;
+  --red-300: #fca5a5; --red-400: #f87171;
+}
+
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--zinc-950); color: var(--zinc-100);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Simulated cursor ─────────────────────────────── */
+.cursor {
+  position: fixed; z-index: 9999; pointer-events: none;
+  width: 20px; height: 20px;
+  transition: left 0.7s cubic-bezier(0.25, 0.1, 0.25, 1), top 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.cursor svg { width: 20px; height: 20px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
+.cursor.clicking .click-ring { animation: clickRing 0.35s ease-out forwards; }
+@keyframes clickRing {
+  0% { transform: scale(0); opacity: 0.7; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.click-ring {
+  position: absolute; top: -6px; left: 2px;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--violet-500);
+  transform: scale(0); opacity: 0;
+}
+
+/* ── App layout ───────────────────────────────────── */
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.app-header { border-bottom: 1px solid var(--zinc-800); padding: 16px 24px; }
+.header-inner {
+  max-width: 768px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header-title { font-size: 18px; font-weight: 700; color: var(--zinc-100); }
+.header-sub { font-size: 12px; color: var(--zinc-500); }
+.header-tag { font-size: 12px; color: var(--zinc-600); font-family: 'Geist Mono', monospace; }
+
+.app-main { flex: 1; padding: 40px 24px; overflow-y: auto; }
+.app-main::-webkit-scrollbar { width: 6px; }
+.app-main::-webkit-scrollbar-track { background: transparent; }
+.app-main::-webkit-scrollbar-thumb { background: var(--zinc-800); border-radius: 3px; }
+.main-inner { max-width: 768px; margin: 0 auto; }
+
+.app-footer {
+  border-top: 1px solid var(--zinc-800); padding: 16px 24px;
+  text-align: center; font-size: 12px; color: var(--zinc-600);
+}
+
+/* ── Phases ────────────────────────────────────────── */
+.phase { display: none; }
+.phase.active { display: block; }
+.phase.fade-in { animation: fadeIn 0.4s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-title { font-size: 24px; font-weight: 700; color: var(--zinc-100); margin-bottom: 8px; }
+.page-desc { color: var(--zinc-400); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+
+/* ── Form elements ─────────────────────────────────── */
+.form-group { margin-bottom: 24px; }
+.form-label { display: block; font-size: 14px; font-weight: 500; color: var(--zinc-300); margin-bottom: 8px; }
+.form-label .req { color: var(--red-400); }
+
+.form-input, .form-textarea {
+  width: 100%; padding: 8px 12px; border-radius: 8px;
+  border: 1px solid var(--zinc-700); background: var(--zinc-900);
+  color: var(--zinc-100); font-size: 14px; font-family: inherit;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus, .form-textarea:focus,
+.form-input.focused, .form-textarea.focused {
+  border-color: var(--violet-500);
+  box-shadow: 0 0 0 1px var(--violet-500);
+}
+.form-input::placeholder, .form-textarea::placeholder { color: var(--zinc-500); }
+.form-textarea { resize: none; line-height: 1.5; }
+.char-count { font-size: 12px; color: var(--zinc-500); margin-top: 4px; }
+
+/* Presets */
+.presets-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.preset-btn {
+  text-align: left; padding: 8px 12px; border-radius: 8px;
+  border: 1px solid var(--zinc-700); background: rgba(39,39,42,0.5);
+  color: var(--zinc-300); font-size: 14px; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s; font-family: inherit;
+}
+.preset-btn:hover, .preset-btn.hovered {
+  border-color: var(--zinc-500); background: var(--zinc-800);
+}
+.preset-btn.highlighted {
+  border-color: var(--violet-500); background: var(--zinc-800);
+}
+
+/* Advanced */
+.advanced-toggle {
+  background: none; border: none; color: var(--violet-400);
+  font-size: 14px; cursor: pointer; font-family: inherit; padding: 0;
+}
+.advanced-panel {
+  border: 1px solid rgba(63,63,70,0.5); border-radius: 8px;
+  padding: 0; background: rgba(24,24,27,0.5);
+  margin-bottom: 0; overflow: hidden;
+  max-height: 0; opacity: 0;
+  transition: max-height 0.5s ease, opacity 0.4s ease, padding 0.4s ease, margin 0.4s ease;
+}
+.advanced-panel.open {
+  max-height: 700px; opacity: 1; padding: 16px; margin-bottom: 24px;
+}
+
+/* Colors */
+.color-check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.color-check-row input[type="checkbox"] { accent-color: var(--violet-500); width: 16px; height: 16px; }
+.color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.color-item label { display: block; font-size: 12px; color: var(--zinc-400); margin-bottom: 4px; text-transform: capitalize; }
+.color-swatch-row { display: flex; align-items: center; gap: 8px; }
+.color-swatch {
+  width: 32px; height: 32px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--zinc-600); transition: transform 0.2s, box-shadow 0.2s;
+}
+.color-swatch.pop {
+  transform: scale(1.2); box-shadow: 0 0 12px rgba(139,92,246,0.4);
+}
+.color-hex { font-size: 12px; color: var(--zinc-500); font-family: 'Geist Mono', monospace; }
+
+/* Typography */
+.typo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.typo-label { font-size: 12px; color: var(--zinc-400); margin-bottom: 4px; }
+.form-select {
+  width: 100%; padding: 6px 8px; border-radius: 6px;
+  border: 1px solid var(--zinc-700); background: var(--zinc-900);
+  color: var(--zinc-100); font-size: 14px; font-family: inherit; outline: none;
+}
+.form-select.focused { border-color: var(--violet-500); box-shadow: 0 0 0 1px var(--violet-500); }
+
+/* Features */
+.feature-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.feature-pill {
+  padding: 4px 12px; border-radius: 9999px; font-size: 14px;
+  border: 1px solid var(--zinc-700); color: var(--zinc-400);
+  background: transparent; cursor: pointer; font-family: inherit; transition: all 0.2s;
+}
+.feature-pill.selected {
+  border-color: var(--violet-500); background: rgba(139,92,246,0.2); color: var(--violet-400);
+}
+.feature-pill.hovered { border-color: var(--zinc-500); }
+
+/* Submit */
+.submit-btn {
+  width: 100%; padding: 12px; border-radius: 8px; border: none;
+  font-size: 16px; font-weight: 600; font-family: inherit;
+  color: white; background: var(--violet-600); cursor: pointer; transition: background 0.2s;
+}
+.submit-btn:hover, .submit-btn.hovered { background: var(--violet-500); }
+
+/* ── Generating ────────────────────────────────────── */
+.gen-container {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 64px 0;
+}
+.spinner-wrap { position: relative; width: 64px; height: 64px; margin-bottom: 32px; }
+.spinner-bg { position: absolute; inset: 0; border-radius: 50%; border: 4px solid var(--zinc-700); }
+.spinner-fg {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 4px solid transparent; border-top-color: var(--violet-500);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.gen-status {
+  font-size: 18px; color: var(--zinc-200); font-weight: 500;
+  text-align: center; margin-bottom: 8px;
+  transition: opacity 0.3s;
+}
+.gen-status.switching { opacity: 0; }
+.gen-elapsed { font-size: 14px; color: var(--zinc-500); text-align: center; margin-bottom: 32px; }
+.gen-hint {
+  font-size: 12px; color: var(--zinc-600); text-align: center;
+  max-width: 420px; line-height: 1.5;
+}
+
+/* ── Pipeline overlay (shows during generation) ───── */
+.pipeline-overlay {
+  margin-top: 48px; width: 100%; max-width: 560px;
+  opacity: 0; transition: opacity 0.5s;
+}
+.pipeline-overlay.visible { opacity: 1; }
+.pipeline-steps { display: flex; gap: 4px; align-items: center; }
+.pip-step {
+  flex: 1; text-align: center; padding: 10px 6px;
+  border: 1px solid var(--zinc-800); border-radius: 6px;
+  background: var(--zinc-950); font-size: 11px; color: var(--zinc-600);
+  transition: all 0.4s;
+}
+.pip-step.active { border-color: var(--violet-500); color: var(--violet-400); background: rgba(139,92,246,0.06); }
+.pip-step.done { border-color: var(--emerald-500); color: var(--emerald-400); background: rgba(16,185,129,0.06); }
+.pip-arrow { color: var(--zinc-700); font-size: 14px; flex-shrink: 0; }
+
+/* ── Result ────────────────────────────────────────── */
+.success-banner {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;
+}
+.success-check { color: var(--emerald-400); font-size: 22px; line-height: 1; }
+.success-title { color: var(--emerald-300); font-weight: 500; font-size: 15px; }
+.success-sub { color: rgba(52,211,153,0.7); font-size: 14px; margin-top: 2px; }
+
+.result-name { font-size: 20px; font-weight: 700; color: var(--zinc-100); margin-bottom: 8px; }
+.result-desc { font-size: 14px; color: var(--zinc-400); margin-bottom: 24px; line-height: 1.6; }
+
+.file-tree-panel {
+  border: 1px solid rgba(63,63,70,0.5); border-radius: 8px;
+  padding: 16px; background: rgba(24,24,27,0.5); margin-bottom: 24px;
+}
+.file-tree-title { font-size: 14px; font-weight: 500; color: var(--zinc-300); margin-bottom: 12px; }
+.tree-line { display: flex; align-items: center; gap: 4px; font-size: 14px; padding: 2px 0; }
+.tree-line.dir { color: var(--zinc-300); cursor: pointer; }
+.tree-line.file { color: var(--zinc-500); }
+.tree-line.highlight { background: rgba(139,92,246,0.08); border-radius: 4px; margin: 0 -4px; padding: 2px 4px; }
+.tree-arrow { font-size: 10px; color: var(--zinc-600); width: 16px; text-align: center; }
+.tree-dash { font-size: 12px; color: var(--zinc-700); width: 16px; text-align: center; margin-left: 12px; }
+
+.action-row { display: flex; gap: 12px; }
+.dl-btn {
+  flex: 1; padding: 12px; border-radius: 8px; border: none;
+  font-size: 16px; font-weight: 600; font-family: inherit;
+  color: white; background: var(--violet-600); cursor: pointer; transition: background 0.2s;
+}
+.dl-btn.hovered { background: var(--violet-500); }
+.reset-btn {
+  padding: 12px 24px; border-radius: 8px;
+  border: 1px solid var(--zinc-700); background: transparent;
+  color: var(--zinc-300); font-size: 16px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: border-color 0.2s;
+}
+.reset-btn.hovered { border-color: var(--zinc-500); }
+
+/* Reveal animation */
+.reveal { opacity: 0; transform: translateY(16px); }
+.reveal.show { animation: revealUp 0.5s ease forwards; }
+@keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+
+/* ── Playback controls ─────────────────────────────── */
+.controls {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(9,9,11,0.95); border-top: 1px solid var(--zinc-800);
+  padding: 10px 24px; display: flex; align-items: center; gap: 16px;
+  backdrop-filter: blur(10px);
+}
+.ctrl-btn {
+  background: none; border: 1px solid var(--zinc-700); color: var(--zinc-300);
+  padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer;
+  font-family: inherit; transition: all 0.2s; white-space: nowrap;
+}
+.ctrl-btn:hover { border-color: var(--violet-500); color: var(--violet-400); }
+.ctrl-btn.active { background: var(--violet-600); border-color: var(--violet-600); color: white; }
+.ctrl-timeline {
+  flex: 1; height: 4px; background: var(--zinc-800); border-radius: 2px;
+  position: relative; cursor: pointer;
+}
+.ctrl-timeline-fill {
+  height: 100%; background: linear-gradient(90deg, var(--violet-600), var(--violet-400));
+  border-radius: 2px; transition: width 0.3s;
+}
+.ctrl-label { font-size: 12px; color: var(--zinc-500); font-family: 'Geist Mono', monospace; white-space: nowrap; }
+.ctrl-phase { font-size: 12px; color: var(--zinc-400); white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Speed selector ────────────────────────────────── */
+.speed-sel {
+  font-size: 12px; color: var(--zinc-400); background: var(--zinc-900);
+  border: 1px solid var(--zinc-700); border-radius: 4px; padding: 3px 6px;
+  font-family: 'Geist Mono', monospace; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor" style="left:-40px;top:-40px;">
+  <svg viewBox="0 0 20 20" fill="none">
+    <path d="M3 2L3 16L7.5 11.5L12 18L14 17L9.5 10.5L15 10L3 2Z" fill="white" stroke="black" stroke-width="1"/>
+  </svg>
+  <div class="click-ring"></div>
+</div>
+
+<!-- App -->
+<div class="app" id="app">
+  <header class="app-header">
+    <div class="header-inner">
+      <div>
+        <div class="header-title">WP Theme Generator</div>
+        <div class="header-sub">AI-powered WordPress Block Theme builder</div>
+      </div>
+      <span class="header-tag">FSE / Block Themes</span>
+    </div>
+  </header>
+
+  <main class="app-main" id="appMain">
+    <div class="main-inner">
+
+      <!-- PHASE: Input -->
+      <div class="phase active" id="phase-input">
+        <h2 class="page-title">Create Your WordPress Theme</h2>
+        <p class="page-desc">Describe your ideal website and our AI will generate a complete, installable WordPress Block Theme with custom colors, typography, templates, and patterns.</p>
+
+        <form id="theForm">
+          <div class="form-group">
+            <label class="form-label">Quick Start Presets</label>
+            <div class="presets-grid">
+              <button type="button" class="preset-btn" id="preset-0">Dark Photography Portfolio</button>
+              <button type="button" class="preset-btn" id="preset-1">Clean Business Landing</button>
+              <button type="button" class="preset-btn" id="preset-2">Colorful Food Blog</button>
+              <button type="button" class="preset-btn" id="preset-3">Minimal Tech Docs</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Theme Name <span class="req">*</span></label>
+            <input type="text" class="form-input" id="inputName" placeholder="My Awesome Theme" maxlength="50" readonly>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description <span class="req">*</span></label>
+            <textarea class="form-textarea" id="inputDesc" rows="4" placeholder="A dark mode photography portfolio with sticky nav, large hero, masonry gallery, and minimal footer..." maxlength="1000" readonly></textarea>
+            <div class="char-count" id="charCount">0/1000 characters (min 20)</div>
+          </div>
+
+          <div class="form-group">
+            <button type="button" class="advanced-toggle" id="advToggle">Show Advanced Options</button>
+          </div>
+
+          <div class="advanced-panel" id="advPanel">
+            <div class="form-group">
+              <label class="form-label color-check-row">
+                <input type="checkbox" id="colorCheck" checked disabled> Custom Color Palette
+              </label>
+              <div class="color-grid" id="colorGrid">
+                <div class="color-item"><label>primary</label><div class="color-swatch-row"><div class="color-swatch" id="sw-primary" style="background:#6D28D9"></div><span class="color-hex" id="hx-primary">#6D28D9</span></div></div>
+                <div class="color-item"><label>secondary</label><div class="color-swatch-row"><div class="color-swatch" id="sw-secondary" style="background:#4338CA"></div><span class="color-hex" id="hx-secondary">#4338CA</span></div></div>
+                <div class="color-item"><label>accent</label><div class="color-swatch-row"><div class="color-swatch" id="sw-accent" style="background:#F59E0B"></div><span class="color-hex" id="hx-accent">#F59E0B</span></div></div>
+                <div class="color-item"><label>background</label><div class="color-swatch-row"><div class="color-swatch" id="sw-background" style="background:#FFFFFF; border-color:#555"></div><span class="color-hex" id="hx-background">#FFFFFF</span></div></div>
+                <div class="color-item"><label>foreground</label><div class="color-swatch-row"><div class="color-swatch" id="sw-foreground" style="background:#18181B"></div><span class="color-hex" id="hx-foreground">#18181B</span></div></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Typography</label>
+              <div class="typo-grid">
+                <div><div class="typo-label">Heading Font</div><select class="form-select" id="selHeading" disabled><option value="">Auto-select</option><option value="Playfair Display">Playfair Display</option><option value="Space Grotesk">Space Grotesk</option></select></div>
+                <div><div class="typo-label">Body Font</div><select class="form-select" id="selBody" disabled><option value="">Auto-select</option><option value="Inter">Inter</option><option value="DM Sans">DM Sans</option></select></div>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Site Type / Features</label>
+              <div class="feature-row">
+                <button type="button" class="feature-pill" id="feat-blog">blog</button>
+                <button type="button" class="feature-pill" id="feat-portfolio">portfolio</button>
+                <button type="button" class="feature-pill" id="feat-ecommerce">ecommerce</button>
+                <button type="button" class="feature-pill" id="feat-landing">landing</button>
+                <button type="button" class="feature-pill" id="feat-docs">documentation</button>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="submit-btn" id="submitBtn">Generate Theme</button>
+        </form>
+      </div>
+
+      <!-- PHASE: Generating -->
+      <div class="phase" id="phase-generating">
+        <div class="gen-container">
+          <div class="spinner-wrap">
+            <div class="spinner-bg"></div>
+            <div class="spinner-fg"></div>
+          </div>
+          <div class="gen-status" id="genStatus">Analyzing your description...</div>
+          <div class="gen-elapsed" id="genElapsed">Elapsed: 0s</div>
+          <p class="gen-hint">Theme generation typically takes 15-45 seconds. The AI is creating templates, patterns, and a complete design system for your theme.</p>
+          <div class="pipeline-overlay" id="pipelineOverlay">
+            <div class="pipeline-steps">
+              <div class="pip-step" id="pip-1">Input<br>Validation</div>
+              <div class="pip-arrow">&rarr;</div>
+              <div class="pip-step" id="pip-2">AI<br>Generation</div>
+              <div class="pip-arrow">&rarr;</div>
+              <div class="pip-step" id="pip-3">Block<br>Validation</div>
+              <div class="pip-arrow">&rarr;</div>
+              <div class="pip-step" id="pip-4">Theme<br>Assembly</div>
+              <div class="pip-arrow">&rarr;</div>
+              <div class="pip-step" id="pip-5">ZIP<br>Packaging</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE: Result -->
+      <div class="phase" id="phase-result">
+        <div class="reveal" id="rev-banner">
+          <div class="success-banner">
+            <span class="success-check">&#10003;</span>
+            <div>
+              <div class="success-title">Theme generated successfully!</div>
+              <div class="success-sub">8.4 KB &middot; Ready for WordPress 6.4+</div>
+            </div>
+          </div>
+        </div>
+        <div class="reveal" id="rev-info">
+          <div class="result-name" id="resultName">Obsidian Lens</div>
+          <div class="result-desc" id="resultDesc">A dramatic dark-mode photography portfolio with a fullscreen hero, immersive gallery grid, sticky minimal navigation, and elegant serif typography. Optimized for visual storytelling with large images and subtle animations.</div>
+        </div>
+        <div class="reveal" id="rev-tree">
+          <div class="file-tree-panel">
+            <div class="file-tree-title">Generated Files</div>
+            <div id="fileTree"></div>
+          </div>
+        </div>
+        <div class="reveal" id="rev-actions">
+          <div class="action-row">
+            <button class="dl-btn" id="dlBtn">Download Theme (.zip)</button>
+            <button class="reset-btn" id="resetBtn">Generate Another</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    Generates WordPress 6.4+ compatible Block Themes using only native blocks.
+  </footer>
+</div>
+
+<!-- Controls -->
+<div class="controls" id="controls">
+  <button class="ctrl-btn active" id="btnPlay">&#9654; Play</button>
+  <button class="ctrl-btn" id="btnPause">&#10074;&#10074;</button>
+  <button class="ctrl-btn" id="btnRestart">&#8634; Restart</button>
+  <select class="speed-sel" id="speedSel" title="Playback speed">
+    <option value="1">1&times;</option>
+    <option value="1.5">1.5&times;</option>
+    <option value="2">2&times;</option>
+  </select>
+  <div class="ctrl-timeline" id="timeline">
+    <div class="ctrl-timeline-fill" id="timelineFill" style="width:0%"></div>
+  </div>
+  <span class="ctrl-phase" id="phaseLabel">Ready</span>
+  <span class="ctrl-label" id="timeLabel">0:00 / 4:00</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════════════════
+const PRESET = {
+  name: 'Obsidian Lens',
+  desc: 'A dramatic dark-mode photography portfolio with a fullscreen hero, immersive gallery grid, sticky minimal navigation, and elegant serif typography. Optimized for visual storytelling with large images and subtle animations.',
+  colors: {
+    primary:   { hex: '#E8C547', bg: '#E8C547' },
+    secondary: { hex: '#2A2A2A', bg: '#2A2A2A' },
+    accent:    { hex: '#C9A84C', bg: '#C9A84C' },
+    background:{ hex: '#0D0D0D', bg: '#0D0D0D' },
+    foreground:{ hex: '#F5F5F5', bg: '#F5F5F5' },
+  },
+  headingFont: 'Playfair Display',
+  bodyFont: 'Inter',
+  feature: 'portfolio',
+};
+
+const STATUS_MSGS = [
+  'Analyzing your description...',
+  'Designing color system...',
+  'Choosing typography...',
+  'Building header and navigation...',
+  'Creating hero section...',
+  'Constructing page templates...',
+  'Assembling block patterns...',
+  'Styling the footer...',
+  'Validating block markup...',
+  'Packaging theme files...',
+];
+
+const FILE_TREE = [
+  { text: 'obsidian-lens', dir: true, indent: 0 },
+  { text: 'style.css', dir: false, indent: 1 },
+  { text: 'functions.php', dir: false, indent: 1 },
+  { text: 'theme.json', dir: false, indent: 1 },
+  { text: 'templates/', dir: true, indent: 1 },
+  { text: 'index.html', dir: false, indent: 2 },
+  { text: 'single.html', dir: false, indent: 2 },
+  { text: 'page.html', dir: false, indent: 2 },
+  { text: 'archive.html', dir: false, indent: 2 },
+  { text: '404.html', dir: false, indent: 2 },
+  { text: 'search.html', dir: false, indent: 2 },
+  { text: 'parts/', dir: true, indent: 1 },
+  { text: 'header.html', dir: false, indent: 2 },
+  { text: 'footer.html', dir: false, indent: 2 },
+  { text: 'patterns/', dir: true, indent: 1 },
+  { text: 'hero-banner.php', dir: false, indent: 2 },
+  { text: 'gallery-grid.php', dir: false, indent: 2 },
+  { text: 'about-section.php', dir: false, indent: 2 },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+//  DOM REFS
+// ═══════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const cursor = $('cursor');
+const appMain = $('appMain');
+const phases = { input: $('phase-input'), generating: $('phase-generating'), result: $('phase-result') };
+const inputName = $('inputName'), inputDesc = $('inputDesc'), charCount = $('charCount');
+const advToggle = $('advToggle'), advPanel = $('advPanel');
+const submitBtn = $('submitBtn');
+const genStatus = $('genStatus'), genElapsed = $('genElapsed');
+const pipelineOverlay = $('pipelineOverlay');
+const phaseLabel = $('phaseLabel'), timeLabel = $('timeLabel'), timelineFill = $('timelineFill');
+const btnPlay = $('btnPlay'), btnPause = $('btnPause'), btnRestart = $('btnRestart');
+const speedSel = $('speedSel');
+
+// ═══════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function center(el) { const r = el.getBoundingClientRect(); return { x: r.left + r.width/2, y: r.top + r.height/2 }; }
+function moveTo(x, y) { cursor.style.left = x+'px'; cursor.style.top = y+'px'; }
+function moveToEl(el) { const c = center(el); moveTo(c.x, c.y); }
+function hideCursor() { moveTo(-40, -40); }
+
+function click() {
+  cursor.classList.remove('clicking');
+  void cursor.offsetWidth;
+  cursor.classList.add('clicking');
+  setTimeout(() => cursor.classList.remove('clicking'), 400);
+}
+
+function switchPhase(name) {
+  Object.values(phases).forEach(p => { p.classList.remove('active'); p.classList.remove('fade-in'); });
+  phases[name].classList.add('active');
+  void phases[name].offsetWidth;
+  phases[name].classList.add('fade-in');
+  appMain.scrollTop = 0;
+}
+
+function setColor(key, hex, bg) {
+  const sw = $('sw-' + key), hx = $('hx-' + key);
+  if (sw) { sw.style.background = bg; if(key==='background') sw.style.borderColor = '#555'; }
+  if (hx) hx.textContent = hex;
+}
+
+function buildFileTreeDOM() {
+  const container = $('fileTree');
+  container.innerHTML = '';
+  FILE_TREE.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'tree-line ' + (f.dir ? 'dir' : 'file');
+    div.style.paddingLeft = (f.indent * 16) + 'px';
+    div.id = 'tree-' + i;
+    if (f.dir) {
+      div.innerHTML = '<span class="tree-arrow">&#9660;</span> ' + f.text;
+    } else {
+      div.innerHTML = '<span class="tree-dash">-</span> ' + f.text;
+    }
+    div.style.opacity = '0';
+    div.style.transform = 'translateX(-8px)';
+    div.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    container.appendChild(div);
+  });
+}
+
+function revealTreeLine(i) {
+  const el = $('tree-' + i);
+  if (el) { el.style.opacity = '1'; el.style.transform = 'translateX(0)'; }
+}
+
+function highlightTreeLine(i) {
+  const el = $('tree-' + i);
+  if (el) el.classList.add('highlight');
+}
+function unhighlightTreeLine(i) {
+  const el = $('tree-' + i);
+  if (el) el.classList.remove('highlight');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TYPING ENGINE
+// ═══════════════════════════════════════════════════════════════════
+let typeTimer = null;
+function typeInto(el, text, speed, done) {
+  let i = 0;
+  el.classList.add('focused');
+  function tick() {
+    if (paused) { typeTimer = setTimeout(tick, 50); return; }
+    if (i <= text.length) {
+      el.value = text.slice(0, i);
+      if (el === inputDesc) charCount.textContent = el.value.length + '/1000 characters (min 20)';
+      i++;
+      typeTimer = setTimeout(tick, speed / playbackSpeed);
+    } else {
+      el.classList.remove('focused');
+      if (done) done();
+    }
+  }
+  tick();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ANIMATION TIMELINE
+// ═══════════════════════════════════════════════════════════════════
+let queue = [];
+let qIdx = 0;
+let stepTimer = null;
+let paused = false;
+let playbackSpeed = 1;
+let elapsedMs = 0;
+let totalMs = 0;
+let clockTimer = null;
+let lastTick = 0;
+let genClockTimer = null;
+let genSec = 0;
+
+function q(duration, label, fn) { queue.push({ duration, label, fn }); }
+
+function buildQueue() {
+  queue = [];
+
+  // ── INTRO: Let the form breathe ──────────────────────────────
+  q(2500, 'Viewing the input form', () => {
+    phaseLabel.textContent = 'Viewing the input form';
+  });
+
+  // ── PRESETS: Hover over a couple ─────────────────────────────
+  q(1200, 'Browsing presets', () => {
+    phaseLabel.textContent = 'Browsing presets';
+    moveToEl($('preset-1'));
+  });
+  q(1000, 'Hovering: Clean Business Landing', () => {
+    $('preset-1').classList.add('hovered');
+  });
+  q(1200, 'Browsing presets', () => {
+    $('preset-1').classList.remove('hovered');
+    moveToEl($('preset-2'));
+  });
+  q(1000, 'Hovering: Colorful Food Blog', () => {
+    $('preset-2').classList.add('hovered');
+  });
+  q(800, 'Moving to Dark Photography Portfolio', () => {
+    $('preset-2').classList.remove('hovered');
+    moveToEl($('preset-0'));
+  });
+  q(600, 'Hovering preset', () => {
+    $('preset-0').classList.add('hovered');
+  });
+
+  // ── CLICK PRESET ─────────────────────────────────────────────
+  q(700, 'Selecting Dark Photography Portfolio', () => {
+    click();
+    $('preset-0').classList.remove('hovered');
+    $('preset-0').classList.add('highlighted');
+    phaseLabel.textContent = 'Preset selected — filling form';
+  });
+
+  // Instant name fill (like real preset)
+  q(400, 'Theme name filled', () => {
+    inputName.value = PRESET.name;
+    inputName.classList.add('focused');
+    setTimeout(() => inputName.classList.remove('focused'), 600);
+  });
+
+  // Type description
+  q(PRESET.desc.length * 28 + 400, 'Typing theme description', () => {
+    phaseLabel.textContent = 'Typing theme description';
+    moveToEl(inputDesc);
+    setTimeout(() => typeInto(inputDesc, PRESET.desc, 26), 300);
+  });
+
+  // ── OPEN ADVANCED OPTIONS ────────────────────────────────────
+  q(1500, 'Opening advanced options', () => {
+    phaseLabel.textContent = 'Opening advanced options';
+    moveToEl(advToggle);
+  });
+  q(700, 'Click: Show Advanced Options', () => {
+    click();
+    advToggle.textContent = 'Hide Advanced Options';
+    advPanel.classList.add('open');
+  });
+
+  // Wait for panel to animate open
+  q(800, 'Advanced options expanded', () => {});
+
+  // ── COLOR PALETTE: Update + hover ────────────────────────────
+  q(1200, 'Reviewing color palette', () => {
+    phaseLabel.textContent = 'Reviewing color palette';
+    // Set preset colors
+    Object.entries(PRESET.colors).forEach(([key, val]) => setColor(key, val.hex, val.bg));
+    moveToEl($('sw-primary'));
+  });
+  q(900, 'Color: Primary #E8C547', () => {
+    $('sw-primary').classList.add('pop');
+    phaseLabel.textContent = 'Color: Primary #E8C547';
+  });
+  q(900, 'Color: Secondary', () => {
+    $('sw-primary').classList.remove('pop');
+    moveToEl($('sw-secondary'));
+    $('sw-secondary').classList.add('pop');
+    phaseLabel.textContent = 'Color: Secondary #2A2A2A';
+  });
+  q(900, 'Color: Accent', () => {
+    $('sw-secondary').classList.remove('pop');
+    moveToEl($('sw-accent'));
+    $('sw-accent').classList.add('pop');
+    phaseLabel.textContent = 'Color: Accent #C9A84C';
+  });
+  q(900, 'Color: Background', () => {
+    $('sw-accent').classList.remove('pop');
+    moveToEl($('sw-background'));
+    $('sw-background').classList.add('pop');
+    phaseLabel.textContent = 'Color: Background #0D0D0D';
+  });
+  q(900, 'Color: Foreground', () => {
+    $('sw-background').classList.remove('pop');
+    moveToEl($('sw-foreground'));
+    $('sw-foreground').classList.add('pop');
+    phaseLabel.textContent = 'Color: Foreground #F5F5F5';
+  });
+  q(600, 'Colors configured', () => {
+    $('sw-foreground').classList.remove('pop');
+  });
+
+  // ── TYPOGRAPHY ───────────────────────────────────────────────
+  q(1000, 'Typography: Heading font', () => {
+    phaseLabel.textContent = 'Typography: Playfair Display + Inter';
+    moveToEl($('selHeading'));
+  });
+  q(600, 'Selecting heading font', () => {
+    click();
+    $('selHeading').classList.add('focused');
+    $('selHeading').value = 'Playfair Display';
+  });
+  q(800, 'Selecting body font', () => {
+    $('selHeading').classList.remove('focused');
+    moveToEl($('selBody'));
+  });
+  q(600, 'Body font: Inter', () => {
+    click();
+    $('selBody').classList.add('focused');
+    $('selBody').value = 'Inter';
+  });
+  q(600, 'Typography set', () => {
+    $('selBody').classList.remove('focused');
+  });
+
+  // ── FEATURES ─────────────────────────────────────────────────
+  q(1000, 'Selecting site type: Portfolio', () => {
+    phaseLabel.textContent = 'Selecting site type: Portfolio';
+    moveToEl($('feat-portfolio'));
+  });
+  q(500, 'Click: portfolio', () => {
+    click();
+    $('feat-portfolio').classList.add('selected');
+  });
+  q(1500, 'Form complete — reviewing', () => {
+    phaseLabel.textContent = 'Form complete — reviewing';
+    // Scroll down slightly to show submit button
+  });
+
+  // ── SCROLL TO SUBMIT ─────────────────────────────────────────
+  q(1200, 'Moving to Generate button', () => {
+    phaseLabel.textContent = 'Ready to generate';
+    moveToEl(submitBtn);
+  });
+  q(600, 'Hover: Generate Theme', () => {
+    submitBtn.classList.add('hovered');
+  });
+
+  // ── CLICK GENERATE ───────────────────────────────────────────
+  q(800, 'Clicking Generate Theme', () => {
+    click();
+    phaseLabel.textContent = 'Generating theme...';
+  });
+  q(500, 'Switching to generation view', () => {
+    submitBtn.classList.remove('hovered');
+    switchPhase('generating');
+    hideCursor();
+    startGenClock();
+  });
+
+  // ── PIPELINE OVERLAY ─────────────────────────────────────────
+  q(1500, 'Pipeline: Input Validation', () => {
+    pipelineOverlay.classList.add('visible');
+    $('pip-1').classList.add('active');
+    phaseLabel.textContent = 'Step 1: Validating input with Zod schemas';
+  });
+  q(1200, 'Pipeline: Input validated', () => {
+    $('pip-1').classList.remove('active');
+    $('pip-1').classList.add('done');
+  });
+
+  // ── STATUS MESSAGES + PIPELINE ───────────────────────────────
+  // AI Generation phase (messages 0-6)
+  q(800, 'Pipeline: AI Generation', () => {
+    $('pip-2').classList.add('active');
+    phaseLabel.textContent = 'Step 2: Claude generating theme JSON';
+  });
+
+  for (let i = 0; i < 7; i++) {
+    q(2200, STATUS_MSGS[i], ((idx) => () => {
+      genStatus.classList.add('switching');
+      setTimeout(() => {
+        genStatus.textContent = STATUS_MSGS[idx];
+        genStatus.classList.remove('switching');
+      }, 200);
+      phaseLabel.textContent = STATUS_MSGS[idx];
+    })(i));
+  }
+
+  q(800, 'Pipeline: AI done', () => {
+    $('pip-2').classList.remove('active');
+    $('pip-2').classList.add('done');
+  });
+
+  // Block Validation phase (messages 7-8)
+  q(800, 'Pipeline: Block Validation', () => {
+    $('pip-3').classList.add('active');
+    phaseLabel.textContent = 'Step 3: Validating block markup';
+  });
+  q(2200, STATUS_MSGS[7], () => {
+    genStatus.classList.add('switching');
+    setTimeout(() => { genStatus.textContent = STATUS_MSGS[7]; genStatus.classList.remove('switching'); }, 200);
+    phaseLabel.textContent = STATUS_MSGS[7];
+  });
+  q(2200, STATUS_MSGS[8], () => {
+    genStatus.classList.add('switching');
+    setTimeout(() => { genStatus.textContent = STATUS_MSGS[8]; genStatus.classList.remove('switching'); }, 200);
+    phaseLabel.textContent = STATUS_MSGS[8];
+  });
+  q(800, 'Pipeline: Validation done', () => {
+    $('pip-3').classList.remove('active');
+    $('pip-3').classList.add('done');
+  });
+
+  // Theme Assembly
+  q(800, 'Pipeline: Theme Assembly', () => {
+    $('pip-4').classList.add('active');
+    phaseLabel.textContent = 'Step 4: Assembling theme files';
+  });
+  q(1500, 'Assembling files', () => {});
+  q(600, 'Pipeline: Assembly done', () => {
+    $('pip-4').classList.remove('active');
+    $('pip-4').classList.add('done');
+  });
+
+  // ZIP Packaging (message 9)
+  q(800, 'Pipeline: ZIP Packaging', () => {
+    $('pip-5').classList.add('active');
+    phaseLabel.textContent = 'Step 5: Packaging into ZIP';
+    genStatus.classList.add('switching');
+    setTimeout(() => { genStatus.textContent = STATUS_MSGS[9]; genStatus.classList.remove('switching'); }, 200);
+  });
+  q(1500, 'Packaging...', () => {});
+  q(600, 'Pipeline: All done', () => {
+    $('pip-5').classList.remove('active');
+    $('pip-5').classList.add('done');
+  });
+
+  // ── SWITCH TO RESULT ─────────────────────────────────────────
+  q(800, 'Theme ready!', () => {
+    stopGenClock();
+    switchPhase('result');
+    phaseLabel.textContent = 'Theme generated — viewing results';
+    buildFileTreeDOM();
+  });
+
+  // Staggered reveals
+  q(300, 'Revealing success banner', () => { $('rev-banner').classList.add('show'); });
+  q(400, 'Revealing theme info', () => { $('rev-info').classList.add('show'); });
+  q(400, 'Revealing file tree', () => { $('rev-tree').classList.add('show'); });
+
+  // Reveal tree lines one by one
+  for (let i = 0; i < FILE_TREE.length; i++) {
+    q(120, 'File: ' + FILE_TREE[i].text, ((idx) => () => {
+      revealTreeLine(idx);
+    })(i));
+  }
+
+  q(400, 'Revealing actions', () => { $('rev-actions').classList.add('show'); });
+
+  // ── EXPLORE THE FILE TREE ────────────────────────────────────
+  q(2000, 'Reviewing generated files', () => {
+    phaseLabel.textContent = 'Reviewing generated files';
+    moveToEl($('tree-0'));
+  });
+
+  // Hover over some key files
+  q(1000, 'File: theme.json', () => {
+    moveToEl($('tree-3'));
+    highlightTreeLine(3);
+    phaseLabel.textContent = 'theme.json — colors, fonts, spacing, layout config';
+  });
+  q(1500, 'File: index.html', () => {
+    unhighlightTreeLine(3);
+    moveToEl($('tree-5'));
+    highlightTreeLine(5);
+    phaseLabel.textContent = 'index.html — includes Query Loop for posts';
+  });
+  q(1500, 'File: 404.html', () => {
+    unhighlightTreeLine(5);
+    moveToEl($('tree-9'));
+    highlightTreeLine(9);
+    phaseLabel.textContent = '404.html — custom on-brand error page';
+  });
+  q(1500, 'File: header.html', () => {
+    unhighlightTreeLine(9);
+    moveToEl($('tree-12'));
+    highlightTreeLine(12);
+    phaseLabel.textContent = 'header.html — site title + navigation';
+  });
+  q(1500, 'File: patterns/', () => {
+    unhighlightTreeLine(12);
+    moveToEl($('tree-14'));
+    highlightTreeLine(14);
+    highlightTreeLine(15);
+    highlightTreeLine(16);
+    highlightTreeLine(17);
+    phaseLabel.textContent = 'patterns/ — 3 reusable block patterns';
+  });
+  q(2000, 'File tree review complete', () => {
+    unhighlightTreeLine(14);
+    unhighlightTreeLine(15);
+    unhighlightTreeLine(16);
+    unhighlightTreeLine(17);
+  });
+
+  // ── DOWNLOAD ─────────────────────────────────────────────────
+  q(1200, 'Moving to Download button', () => {
+    phaseLabel.textContent = 'Ready to download';
+    moveToEl($('dlBtn'));
+  });
+  q(600, 'Hovering Download', () => {
+    $('dlBtn').classList.add('hovered');
+  });
+  q(800, 'Clicking Download', () => {
+    click();
+    phaseLabel.textContent = 'Downloading obsidian-lens.zip';
+  });
+  q(2000, 'Theme downloaded!', () => {
+    $('dlBtn').classList.remove('hovered');
+    phaseLabel.textContent = 'Theme downloaded — ready for WordPress!';
+  });
+
+  // ── HOVER GENERATE ANOTHER ──────────────────────────────────
+  q(1500, 'Generate Another option', () => {
+    moveToEl($('resetBtn'));
+    $('resetBtn').classList.add('hovered');
+    phaseLabel.textContent = 'Can generate another theme anytime';
+  });
+  q(2000, 'Demo wrapping up', () => {
+    $('resetBtn').classList.remove('hovered');
+  });
+
+  // ── FINAL ────────────────────────────────────────────────────
+  q(4000, 'Demo complete', () => {
+    hideCursor();
+    phaseLabel.textContent = 'Demo complete — press Restart to replay';
+  });
+
+  totalMs = queue.reduce((s, step) => s + step.duration, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  GENERATION CLOCK
+// ═══════════════════════════════════════════════════════════════════
+function startGenClock() {
+  genSec = 0;
+  genElapsed.textContent = 'Elapsed: 0s';
+  genClockTimer = setInterval(() => {
+    if (!paused) {
+      genSec++;
+      const m = Math.floor(genSec / 60), s = genSec % 60;
+      genElapsed.textContent = 'Elapsed: ' + (m > 0 ? m + 'm ' : '') + s + 's';
+    }
+  }, 1000);
+}
+function stopGenClock() { if (genClockTimer) { clearInterval(genClockTimer); genClockTimer = null; } }
+
+// ═══════════════════════════════════════════════════════════════════
+//  PLAYBACK ENGINE
+// ═══════════════════════════════════════════════════════════════════
+function runStep() {
+  if (qIdx >= queue.length) { stopClock(); return; }
+  const step = queue[qIdx];
+  step.fn();
+  qIdx++;
+  const delay = step.duration / playbackSpeed;
+  stepTimer = setTimeout(() => { if (!paused) runStep(); }, delay);
+}
+
+function startClock() {
+  lastTick = Date.now();
+  clockTimer = setInterval(() => {
+    if (!paused) {
+      const now = Date.now();
+      elapsedMs += (now - lastTick) * playbackSpeed;
+      lastTick = now;
+      updateTimeDisplay();
+    } else {
+      lastTick = Date.now();
+    }
+  }, 100);
+}
+function stopClock() { if (clockTimer) { clearInterval(clockTimer); clockTimer = null; } }
+
+function updateTimeDisplay() {
+  const sec = Math.floor(elapsedMs / 1000);
+  const m = Math.floor(sec / 60), s = sec % 60;
+  const tSec = Math.floor(totalMs / 1000);
+  const tM = Math.floor(tSec / 60), tS = tSec % 60;
+  timeLabel.textContent = m + ':' + String(s).padStart(2,'0') + ' / ' + tM + ':' + String(tS).padStart(2,'0');
+  const pct = Math.min(100, (elapsedMs / totalMs) * 100);
+  timelineFill.style.width = pct + '%';
+}
+
+function play() {
+  if (qIdx >= queue.length) restart();
+  paused = false;
+  btnPlay.classList.add('active');
+  btnPause.classList.remove('active');
+  lastTick = Date.now();
+  if (!clockTimer) startClock();
+  runStep();
+}
+function pause() {
+  paused = true;
+  btnPause.classList.add('active');
+  btnPlay.classList.remove('active');
+  if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; }
+}
+
+function resetUI() {
+  switchPhase('input');
+  inputName.value = ''; inputDesc.value = '';
+  inputName.classList.remove('focused'); inputDesc.classList.remove('focused');
+  charCount.textContent = '0/1000 characters (min 20)';
+  advToggle.textContent = 'Show Advanced Options';
+  advPanel.classList.remove('open');
+  ['preset-0','preset-1','preset-2','preset-3'].forEach(id => {
+    $(id).classList.remove('highlighted','hovered');
+  });
+  submitBtn.classList.remove('hovered');
+  submitBtn.style.background = '';
+  // Reset colors to defaults
+  setColor('primary','#6D28D9','#6D28D9');
+  setColor('secondary','#4338CA','#4338CA');
+  setColor('accent','#F59E0B','#F59E0B');
+  setColor('background','#FFFFFF','#FFFFFF');
+  setColor('foreground','#18181B','#18181B');
+  $('selHeading').value = ''; $('selBody').value = '';
+  $('selHeading').classList.remove('focused'); $('selBody').classList.remove('focused');
+  ['blog','portfolio','ecommerce','landing','docs'].forEach(f => {
+    $('feat-'+f).classList.remove('selected','hovered');
+  });
+  ['sw-primary','sw-secondary','sw-accent','sw-background','sw-foreground'].forEach(id => {
+    $(id).classList.remove('pop');
+  });
+  genStatus.textContent = STATUS_MSGS[0];
+  genStatus.classList.remove('switching');
+  genElapsed.textContent = 'Elapsed: 0s';
+  pipelineOverlay.classList.remove('visible');
+  for (let i = 1; i <= 5; i++) { $('pip-'+i).classList.remove('active','done'); }
+  $('dlBtn').classList.remove('hovered');
+  $('resetBtn').classList.remove('hovered');
+  ['rev-banner','rev-info','rev-tree','rev-actions'].forEach(id => $(id).classList.remove('show'));
+  hideCursor();
+}
+
+function restart() {
+  paused = true;
+  if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; }
+  stopClock(); stopGenClock();
+  qIdx = 0; elapsedMs = 0;
+  resetUI();
+  updateTimeDisplay();
+  phaseLabel.textContent = 'Ready';
+  btnPlay.classList.add('active');
+  btnPause.classList.remove('active');
+  setTimeout(() => play(), 400);
+}
+
+// ── Controls ───────────────────────────────────────────────────
+btnPlay.addEventListener('click', play);
+btnPause.addEventListener('click', pause);
+btnRestart.addEventListener('click', restart);
+speedSel.addEventListener('change', () => { playbackSpeed = parseFloat(speedSel.value); });
+
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') { e.preventDefault(); paused ? play() : pause(); }
+  if (e.key === 'r' || e.key === 'R') restart();
+});
+
+// ── Init ───────────────────────────────────────────────────────
+buildQueue();
+updateTimeDisplay();
+phaseLabel.textContent = 'Starting...';
+setTimeout(() => play(), 600);
+</script>
+</body>
+</html>

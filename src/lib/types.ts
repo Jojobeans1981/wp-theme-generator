@@ -46,7 +46,7 @@ export interface TemplateFile {
 
 export interface TemplatePartFile {
   name: string;
-  area: 'header' | 'footer' | 'uncategorized';
+  area: string;
   content: string;
 }
 

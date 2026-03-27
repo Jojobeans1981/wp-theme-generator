@@ -1,4 +1,5 @@
 import { generatedThemeSchema } from '../theme/schema';
+import { fixBlockMarkup } from '../validation/block-fixer';
 import type { GeneratedTheme } from '../types';
 
 function slugify(name: string): string {
@@ -159,5 +160,17 @@ export function parseAIResponse(raw: string): GeneratedTheme {
     throw new Error(`AI output failed schema validation:\n${errors}`);
   }
 
-  return result.data as GeneratedTheme;
+  // Fix block markup HTML wrappers that LLMs commonly get wrong
+  const theme = result.data as GeneratedTheme;
+  for (const t of theme.templates) {
+    t.content = fixBlockMarkup(t.content);
+  }
+  for (const p of theme.templateParts) {
+    p.content = fixBlockMarkup(p.content);
+  }
+  for (const p of theme.patterns) {
+    p.content = fixBlockMarkup(p.content);
+  }
+
+  return theme;
 }

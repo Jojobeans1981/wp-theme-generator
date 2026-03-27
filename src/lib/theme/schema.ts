@@ -112,7 +112,7 @@ const themeJsonDataSchema = z.object({
     layout: z.object({
       contentSize: z.string().min(1).default('800px'),
       wideSize: z.string().min(1).default('1200px'),
-    }),
+    }).default(() => ({ contentSize: '800px', wideSize: '1200px' })),
     appearanceTools: z.boolean().default(true).transform(() => true as const),
     useRootPaddingAwareAlignments: z.boolean().default(true).transform(() => true as const),
   }),

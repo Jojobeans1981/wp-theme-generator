@@ -90,6 +90,21 @@ function patchAIOutput(data: Record<string, unknown>): Record<string, unknown> {
     });
   }
 
+  // Fix styles fields where Llama sends wrong types
+  if (tj.styles && typeof tj.styles === 'object') {
+    const styles = tj.styles as Record<string, unknown>;
+    if (styles.typography && typeof styles.typography === 'object') {
+      const stylesTypo = styles.typography as Record<string, unknown>;
+      // Llama sometimes sends fontFamily as an array instead of a string
+      if (Array.isArray(stylesTypo.fontFamily)) {
+        stylesTypo.fontFamily = (stylesTypo.fontFamily as string[]).join(', ');
+      }
+      if (Array.isArray(stylesTypo.fontSize)) {
+        stylesTypo.fontSize = String((stylesTypo.fontSize as unknown[])[0] || '1rem');
+      }
+    }
+  }
+
   // Ensure styleCss exists
   if (data.styleCss === undefined || data.styleCss === null) {
     data.styleCss = '';

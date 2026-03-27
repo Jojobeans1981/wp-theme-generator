@@ -1,69 +1,87 @@
 import type { ThemeRequest } from '../types';
 
 export function buildSystemPrompt(): string {
-  return `You are a WordPress Block Theme generator. You produce ONLY valid JSON output — no markdown fences, no explanations, no commentary.
+  return `You are a WordPress theme.json designer. You produce ONLY valid JSON output — no markdown, no explanations.
 
 ## YOUR TASK
-Generate a complete WordPress Block Theme as a single JSON object. The theme must be visually impressive, non-generic, and production-ready.
+Generate a WordPress theme.json (version 3) configuration. Templates and patterns are pre-built — you ONLY design the visual system.
 
-## ABSOLUTE RULES (VIOLATION = FAILURE)
-1. NEVER use \`<!-- wp:html -->\` anywhere. This block is BANNED. Every visual element must use a native WordPress block.
-2. ALL block markup must use valid WordPress block comment syntax: \`<!-- wp:blockname {"attr":"value"} -->content<!-- /wp:blockname -->\`
-3. Self-closing blocks use: \`<!-- wp:blockname /-->\`
-4. Every color value must be a valid 6-digit hex code (#RRGGBB).
-5. The JSON must parse without errors. No trailing commas. No comments in JSON.
-6. Template and pattern content must be strings containing valid block HTML.
-
-## BLOCK MARKUP RULES
-- Blocks are HTML comments: \`<!-- wp:namespace/blockname {"jsonAttrs":true} -->\`
-- Core blocks omit namespace: \`<!-- wp:paragraph -->\` not \`<!-- wp:core/paragraph -->\`
-- Nested blocks (innerBlocks) go between the opening and closing comments
-- Group blocks: \`<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group">...inner blocks...</div><!-- /wp:group -->\`
-- Columns: \`<!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"66.66%"} --><div class="wp-block-column" style="flex-basis:66.66%">...blocks...</div><!-- /wp:column --><!-- wp:column {"width":"33.33%"} --><div class="wp-block-column" style="flex-basis:33.33%">...blocks...</div><!-- /wp:column --></div><!-- /wp:columns -->\`
-- Cover block: \`<!-- wp:cover {"overlayColor":"primary","minHeight":500,"isDark":true} --><div class="wp-block-cover is-dark" style="min-height:500px"><span aria-hidden="true" class="wp-block-cover__background has-primary-background-color has-background-dim"></span><div class="wp-block-cover__inner-container">...blocks...</div></div><!-- /wp:cover -->\`
-- Navigation: \`<!-- wp:navigation {"layout":{"type":"flex","justifyContent":"space-between"}} /-->\`
-- Site Title: \`<!-- wp:site-title /-->\`
-- Site Logo: \`<!-- wp:site-logo /-->\`
-- Query Loop: \`<!-- wp:query {"queryId":1,"query":{"perPage":6,"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date"}} --><div class="wp-block-query"><!-- wp:post-template -->...post blocks...<!-- /wp:post-template --><!-- wp:query-pagination --><div class="wp-block-query-pagination"><!-- wp:query-pagination-previous /--><!-- wp:query-pagination-numbers /--><!-- wp:query-pagination-next /--></div><!-- /wp:query-pagination --></div><!-- /wp:query -->\`
-- Post blocks (inside query): \`<!-- wp:post-title {"isLink":true} /-->\`, \`<!-- wp:post-excerpt /-->\`, \`<!-- wp:post-featured-image /-->\`, \`<!-- wp:post-date /-->\`, \`<!-- wp:post-author /-->\`
-- Spacer: \`<!-- wp:spacer {"height":"60px"} --><div style="height:60px" aria-hidden="true" class="wp-block-spacer"></div><!-- /wp:spacer -->\`
-- Separator: \`<!-- wp:separator {"className":"is-style-wide"} --><hr class="wp-block-separator has-alpha-channel-opacity is-style-wide"/><!-- /wp:separator -->\`
-- Buttons: \`<!-- wp:buttons --><div class="wp-block-buttons"><!-- wp:button {"backgroundColor":"primary"} --><div class="wp-block-button"><a class="wp-block-button__link has-primary-background-color has-background wp-element-button">Click Me</a></div><!-- /wp:button --></div><!-- /wp:buttons -->\`
-- Image: \`<!-- wp:image {"sizeSlug":"full"} --><figure class="wp-block-image size-full"><img src="https://images.unsplash.com/photo-placeholder" alt="description"/></figure><!-- /wp:image -->\`
-
-## DESIGN PRINCIPLES
-- Use the Cover block for hero sections (with overlay colors, not images that won't exist)
-- Use Group blocks with constrained/flex/grid layouts for sections
-- Use Columns for multi-column layouts
-- Use Spacer blocks for vertical rhythm (not empty paragraphs)
-- Use Separator blocks for visual dividers
-- Apply colors via theme palette slugs (backgroundColor, textColor) not inline hex
-- Use fontSize presets from theme.json (small, medium, large, x-large, xx-large)
-- Create visual hierarchy with font size variation, spacing, and color contrast
-- Every template must include \`<!-- wp:template-part {"slug":"header","area":"header"} /-->\` at top and \`<!-- wp:template-part {"slug":"footer","area":"footer"} /-->\` at bottom
+## RULES
+1. Every color must be a valid 6-digit hex code (#RRGGBB).
+2. The JSON must parse without errors. No trailing commas.
+3. Return ONLY the JSON object — no wrapping, no code fences.
 
 ## OUTPUT FORMAT
-Return EXACTLY this JSON structure (no wrapping, no markdown):
+Return EXACTLY this JSON structure:
 {
-  "themeJson": { <valid theme.json content, version 3> },
-  "templates": [
-    { "name": "index", "content": "<block markup string>" },
-    { "name": "single", "content": "<block markup string>" },
-    { "name": "page", "content": "<block markup string>" },
-    { "name": "archive", "content": "<block markup string>" },
-    { "name": "404", "content": "<block markup string>" },
-    { "name": "search", "content": "<block markup string>" }
-  ],
-  "templateParts": [
-    { "name": "header", "area": "header", "content": "<block markup string>" },
-    { "name": "footer", "area": "footer", "content": "<block markup string>" }
-  ],
-  "patterns": [
-    { "name": "pattern-slug", "title": "Pattern Title", "categories": ["featured"], "content": "<block markup string>" },
-    <at least 3 patterns total>
-  ],
-  "styleCss": "<additional CSS rules as a string — animations, custom properties, hover effects>"
-}`;
+  "themeJson": {
+    "version": 3,
+    "settings": {
+      "color": {
+        "palette": [
+          {"slug": "primary", "color": "#HEX", "name": "Primary"},
+          {"slug": "secondary", "color": "#HEX", "name": "Secondary"},
+          {"slug": "accent", "color": "#HEX", "name": "Accent"},
+          {"slug": "background", "color": "#HEX", "name": "Background"},
+          {"slug": "foreground", "color": "#HEX", "name": "Foreground"}
+        ]
+      },
+      "typography": {
+        "fontFamilies": [
+          {"fontFamily": "'Font Name', serif", "slug": "heading", "name": "Heading"},
+          {"fontFamily": "'Font Name', sans-serif", "slug": "body", "name": "Body"}
+        ],
+        "fontSizes": [
+          {"slug": "small", "size": "0.875rem", "name": "Small"},
+          {"slug": "medium", "size": "1rem", "name": "Medium"},
+          {"slug": "large", "size": "1.5rem", "name": "Large"},
+          {"slug": "x-large", "size": "2.25rem", "name": "Extra Large"},
+          {"slug": "xx-large", "size": "3.5rem", "name": "Double Extra Large"}
+        ]
+      },
+      "spacing": {
+        "units": ["px", "em", "rem", "vh", "vw", "%"],
+        "spacingSizes": [
+          {"slug": "10", "size": "0.5rem", "name": "Small"},
+          {"slug": "20", "size": "1rem", "name": "Medium"},
+          {"slug": "30", "size": "1.5rem", "name": "Large"},
+          {"slug": "40", "size": "2.5rem", "name": "Extra Large"},
+          {"slug": "50", "size": "4rem", "name": "Huge"}
+        ]
+      },
+      "layout": {"contentSize": "800px", "wideSize": "1200px"},
+      "appearanceTools": true,
+      "useRootPaddingAwareAlignments": true
+    },
+    "styles": {
+      "color": {
+        "background": "var(--wp--preset--color--background)",
+        "text": "var(--wp--preset--color--foreground)"
+      },
+      "typography": {
+        "fontFamily": "var(--wp--preset--font-family--body)",
+        "fontSize": "var(--wp--preset--font-size--medium)",
+        "lineHeight": "1.7"
+      },
+      "elements": {
+        "h1": {"typography": {"fontFamily": "var(--wp--preset--font-family--heading)", "fontSize": "var(--wp--preset--font-size--xx-large)"}},
+        "h2": {"typography": {"fontFamily": "var(--wp--preset--font-family--heading)", "fontSize": "var(--wp--preset--font-size--x-large)"}},
+        "h3": {"typography": {"fontFamily": "var(--wp--preset--font-family--heading)", "fontSize": "var(--wp--preset--font-size--large)"}},
+        "link": {"color": {"text": "var(--wp--preset--color--accent)"}}
+      },
+      "blocks": {}
+    },
+    "templateParts": [
+      {"name": "header", "title": "Header", "area": "header"},
+      {"name": "footer", "title": "Footer", "area": "footer"}
+    ]
+  },
+  "heroTitle": "A short, catchy hero headline for this theme",
+  "heroSubtitle": "A one-sentence description that appears below the hero title",
+  "styleCss": ""
+}
+
+IMPORTANT: Pick colors, fonts, and sizes that match the theme description. Be creative with the palette — don't use generic defaults.`;
 }
 
 export function buildUserPrompt(request: ThemeRequest): string {

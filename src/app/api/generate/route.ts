@@ -3,7 +3,6 @@ import { themeRequestSchema } from '@/lib/theme/schema';
 import { createAIProvider } from '@/lib/ai/client';
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompts';
 import { parseAIResponse } from '@/lib/ai/parser';
-import { validateTheme } from '@/lib/validation/theme-validator';
 import { packageTheme } from '@/lib/theme/packager';
 import type { GeneratedTheme, ThemeRequest } from '@/lib/types';
 
@@ -38,7 +37,7 @@ export async function POST(request: Request) {
       slug,
     };
 
-    // 2. Generate via AI
+    // 2. Generate theme.json design via AI
     const provider = createAIProvider();
     const systemPrompt = buildSystemPrompt();
     const userPrompt = buildUserPrompt(themeRequest);
@@ -57,7 +56,7 @@ export async function POST(request: Request) {
       throw e;
     }
 
-    // 3. Parse AI response (with up to 2 retries on failure)
+    // 3. Parse AI response (with up to 2 retries)
     let theme: GeneratedTheme;
     let lastError: Error | null = null;
     const MAX_ATTEMPTS = 3;
@@ -67,7 +66,7 @@ export async function POST(request: Request) {
         if (attempt > 0) {
           const retryPrompt =
             userPrompt +
-            `\n\nATTEMPT ${attempt + 1} — your previous response had these errors:\n${lastError!.message}\n\nCRITICAL RULES FOR YOUR RETRY:\n- Return ONLY raw JSON, no markdown fences\n- Every fontFamily entry MUST have "slug", "name", and "fontFamily" keys\n- settings.color.palette MUST be an array of {slug, color, name} objects\n- templates must be [{name, content}], templateParts must be [{name, area, content}]\n- patterns must be [{name, title, categories, content}] with at least 3 entries\n- Include "styleCss" key (can be empty string "")\n- version must be 3`;
+            `\n\nATTEMPT ${attempt + 1} — your previous response had errors:\n${lastError!.message}\n\nReturn ONLY the JSON object with themeJson, heroTitle, heroSubtitle, and styleCss.`;
           rawResponse = await provider.generate(systemPrompt, retryPrompt);
         }
         theme = parseAIResponse(rawResponse);
@@ -82,22 +81,10 @@ export async function POST(request: Request) {
       throw lastError || new Error('Theme generation failed after retries');
     }
 
-    // 4. Validate complete theme
-    const validation = validateTheme(theme, slug);
-    if (!validation.valid) {
-      return NextResponse.json(
-        {
-          error: 'Generated theme contains invalid block markup',
-          details: validation.errors,
-        },
-        { status: 422 }
-      );
-    }
-
-    // 5. Package into ZIP
+    // 4. Package into ZIP (templates/patterns are pre-built, theme.json from AI)
     const zipBuffer = await packageTheme(themeRequest, theme);
 
-    // 6. Return ZIP
+    // 5. Return ZIP
     return new Response(new Uint8Array(zipBuffer), {
       headers: {
         'Content-Type': 'application/zip',

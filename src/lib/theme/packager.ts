@@ -2,10 +2,10 @@ import archiver from 'archiver';
 import { PassThrough } from 'stream';
 import type { ThemeRequest, GeneratedTheme } from '../types';
 import { buildThemeJson } from './theme-json';
-import { buildTemplateFiles, buildTemplatePartFiles } from './templates';
 import { buildPatternFiles } from './patterns';
 import { buildStyleCss } from './style-css';
 import { buildFunctionsPhp } from './functions-php';
+import { BASE_TEMPLATES, BASE_PARTS, BASE_PATTERNS } from './base-templates';
 
 function resolveSlug(request: ThemeRequest): string {
   return (
@@ -26,7 +26,7 @@ export async function packageTheme(
   // Gather all files
   const files: Array<{ path: string; content: string }> = [];
 
-  // theme.json
+  // theme.json (from AI)
   files.push({
     path: `${slug}/theme.json`,
     content: buildThemeJson(theme.themeJson),
@@ -44,18 +44,32 @@ export async function packageTheme(
     content: buildFunctionsPhp(slug, request.themeName),
   });
 
-  // Templates
-  for (const f of buildTemplateFiles(theme.templates)) {
-    files.push({ path: `${slug}/${f.path}`, content: f.content });
+  // Templates (pre-built, guaranteed valid)
+  for (const [name, content] of Object.entries(BASE_TEMPLATES)) {
+    files.push({ path: `${slug}/templates/${name}.html`, content });
   }
 
-  // Template parts
-  for (const f of buildTemplatePartFiles(theme.templateParts)) {
-    files.push({ path: `${slug}/${f.path}`, content: f.content });
+  // Template parts (pre-built)
+  for (const [name, content] of Object.entries(BASE_PARTS)) {
+    files.push({ path: `${slug}/parts/${name}.html`, content });
   }
 
-  // Patterns
-  for (const f of buildPatternFiles(theme.patterns, slug)) {
+  // Patterns (pre-built, with AI-customized hero text)
+  const heroTitle = (theme as unknown as Record<string, string>).heroTitle || `Welcome to ${request.themeName}`;
+  const heroSubtitle = (theme as unknown as Record<string, string>).heroSubtitle || request.description;
+
+  const patterns = [
+    {
+      ...BASE_PATTERNS.hero,
+      content: BASE_PATTERNS.hero.content
+        .replace('Welcome to Your New Site', heroTitle)
+        .replace('A beautifully designed WordPress experience, built with blocks.', heroSubtitle),
+    },
+    BASE_PATTERNS['featured-posts'],
+    BASE_PATTERNS.cta,
+  ];
+
+  for (const f of buildPatternFiles(patterns, slug)) {
     files.push({ path: `${slug}/${f.path}`, content: f.content });
   }
 

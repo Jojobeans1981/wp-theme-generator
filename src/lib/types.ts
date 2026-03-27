@@ -37,6 +37,8 @@ export interface GeneratedTheme {
   templateParts: TemplatePartFile[];
   patterns: PatternFile[];
   styleCss: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
 }
 
 export interface TemplateFile {

@@ -5,14 +5,14 @@ import type { ThemeRequest } from '@/lib/types';
 describe('buildSystemPrompt', () => {
   const systemPrompt = buildSystemPrompt();
 
-  it('contains wp:html ban', () => {
-    expect(systemPrompt).toContain('wp:html');
-    expect(systemPrompt).toContain('BANNED');
+  it('contains JSON output instruction', () => {
+    expect(systemPrompt).toContain('JSON');
+    expect(systemPrompt).toContain('OUTPUT FORMAT');
   });
 
-  it('contains JSON output instruction', () => {
-    expect(systemPrompt).toContain('valid JSON output');
-    expect(systemPrompt).toContain('OUTPUT FORMAT');
+  it('requests theme.json with color palette', () => {
+    expect(systemPrompt).toContain('palette');
+    expect(systemPrompt).toContain('fontFamilies');
   });
 });
 

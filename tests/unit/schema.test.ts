@@ -50,21 +50,24 @@ describe('generatedThemeSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects theme missing required templates', () => {
-    const invalid = {
+  it('accepts theme without templates (pre-built templates used)', () => {
+    const minimal = {
       ...MOCK_GENERATED_THEME,
-      templates: [],
+      templates: undefined,
+      templateParts: undefined,
+      patterns: undefined,
     };
-    const result = generatedThemeSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+    const result = generatedThemeSchema.safeParse(minimal);
+    expect(result.success).toBe(true);
   });
 
-  it('rejects theme with zero patterns', () => {
-    const invalid = {
+  it('accepts theme with heroTitle and heroSubtitle', () => {
+    const withHero = {
       ...MOCK_GENERATED_THEME,
-      patterns: [],
+      heroTitle: 'Welcome',
+      heroSubtitle: 'A great site',
     };
-    const result = generatedThemeSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+    const result = generatedThemeSchema.safeParse(withHero);
+    expect(result.success).toBe(true);
   });
 });

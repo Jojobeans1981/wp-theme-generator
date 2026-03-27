@@ -201,10 +201,14 @@ const patternFileSchema = z.object({
 
 export const generatedThemeSchema = z.object({
   themeJson: themeJsonDataSchema,
-  templates: z.array(templateFileSchema).min(1),
-  templateParts: z.array(templatePartFileSchema).min(1),
-  patterns: z.array(patternFileSchema).min(1),
+  // Templates/patterns are now pre-built — AI only provides theme.json
+  // These fields are kept optional for backward compatibility with tests
+  templates: z.array(templateFileSchema).optional().default([]),
+  templateParts: z.array(templatePartFileSchema).optional().default([]),
+  patterns: z.array(patternFileSchema).optional().default([]),
   styleCss: z.string().default(''),
+  heroTitle: z.string().optional(),
+  heroSubtitle: z.string().optional(),
 });
 
 export type ValidatedThemeRequest = z.infer<typeof themeRequestSchema>;

@@ -120,12 +120,19 @@ const themeJsonDataSchema = z.object({
     color: z.object({
       background: z.string().min(1).default('var(--wp--preset--color--background)'),
       text: z.string().min(1).default('var(--wp--preset--color--foreground)'),
-    }).default({}),
+    }).default(() => ({
+      background: 'var(--wp--preset--color--background)',
+      text: 'var(--wp--preset--color--foreground)',
+    })),
     typography: z.object({
       fontFamily: z.string().min(1).default('var(--wp--preset--font-family--body)'),
       fontSize: z.string().min(1).default('var(--wp--preset--font-size--medium)'),
       lineHeight: z.string().min(1).default('1.7'),
-    }).default({}),
+    }).default(() => ({
+      fontFamily: 'var(--wp--preset--font-family--body)',
+      fontSize: 'var(--wp--preset--font-size--medium)',
+      lineHeight: '1.7',
+    })),
     spacing: z
       .object({
         padding: z
@@ -140,14 +147,26 @@ const themeJsonDataSchema = z.object({
       .optional(),
     elements: z.record(z.string(), z.record(z.string(), z.unknown())).default({}),
     blocks: z.record(z.string(), z.record(z.string(), z.unknown())).default({}),
-  }).default({}),
+  }).default(() => ({
+    color: {
+      background: 'var(--wp--preset--color--background)',
+      text: 'var(--wp--preset--color--foreground)',
+    },
+    typography: {
+      fontFamily: 'var(--wp--preset--font-family--body)',
+      fontSize: 'var(--wp--preset--font-size--medium)',
+      lineHeight: '1.7',
+    },
+    elements: {},
+    blocks: {},
+  })),
   templateParts: z.array(
     z.object({
       name: z.string().min(1),
       title: z.string().min(1),
       area: z.string().min(1),
     })
-  ).default([
+  ).default(() => [
     { name: 'header', title: 'Header', area: 'header' },
     { name: 'footer', title: 'Footer', area: 'footer' },
   ]),
